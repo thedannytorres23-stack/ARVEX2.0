@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Finalizar compra | ARVEX</title>
+    <style>
+        body {
+            background: #101010;
+            color: white;
+            font-family: Arial, sans-serif;
+            max-width: 550px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+        h1 { color: #c9a66b; }
+        input, textarea {
+            box-sizing: border-box;
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 20px;
+            background: #222;
+            color: white;
+            border: 1px solid #555;
+        }
+        button {
+            background: #c9a66b;
+            border: 0;
+            padding: 15px 25px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        a { color: #c9a66b; }
+    </style>
+</head>
+<body>
+    <h1>FINALIZAR COMPRA</h1>
+    <p>Completa tus datos para registrar tu pedido.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">CONFIRMAR PEDIDO</button>
+    </form>
+
+    <p><a href="{% url 'ver_carrito' %}">Volver al carrito</a></p>
+</body>
+</html>

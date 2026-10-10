@@ -1,0 +1,86 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ producto.nombre }} | ARVEX</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/detalle.css' %}">
+</head>
+<body>
+
+<header class="navbar">
+    <a href="{% url 'home' %}" class="logo">ARVEX<span>.</span></a>
+    <a href="{% url 'home' %}#productos" class="nav-button">
+        VOLVER A LA COLECCIÓN
+    </a>
+</header>
+
+<main class="detalle-contenedor">
+    <div class="detalle-imagen">
+        {% if producto.imagen %}
+            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+        {% else %}
+            <div class="placeholder">ARVEX</div>
+        {% endif %}
+    </div>
+
+    <div class="detalle-info">
+        <p class="eyebrow">{{ producto.marca.nombre }}</p>
+        <h1>{{ producto.nombre }}</h1>
+        <p class="detalle-categoria">{{ producto.categoria.nombre }}</p>
+
+        <p class="detalle-descripcion">{{ producto.descripcion }}</p>
+
+        <h2 class="detalle-precio">RD$ {{ producto.precio }}</h2>
+
+        {% if producto.stock > 0 %}
+            <p class="available">
+                Disponible — {{ producto.stock }} unidades
+            </p>
+            
+<form method="post" action="{% url 'agregar_carrito' producto.id %}">
+    {% csrf_token %}
+    <button type="submit" class="primary-button">
+        AGREGAR AL CARRITO →
+    </button>
+</form>
+
+<a href="{% url 'ver_carrito' %}" class="nav-button"
+   style="display:inline-block; margin-top:20px;">
+    VER MI CARRITO
+</a>
+
+        {% else %}
+            <p class="sold-out">Producto agotado</p>
+        {% endif %}
+    </div>
+</main>
+
+{% if relacionados %}
+<section class="collection">
+    <div class="section-heading">
+        <h2>TE PUEDE INTERESAR</h2>
+    </div>
+
+    <div class="product-grid">
+        {% for item in relacionados %}
+        <a class="product-card relacionado" href="{% url 'detalle_producto' item.slug %}">
+            {% if item.imagen %}
+                <img src="{{ item.imagen.url }}" alt="{{ item.nombre }}">
+            {% endif %}
+            <div class="product-info">
+                <span class="brand">{{ item.marca.nombre }}</span>
+                <h3>{{ item.nombre }}</h3>
+                <strong>RD$ {{ item.precio }}</strong>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,135 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARVEX | Fragancias y cuidado personal</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+<header class="navbar">
+    <a href="/" class="logo">ARVEX<span>.</span></a>
+
+    <nav>
+        <a href="#inicio">Inicio</a>
+        <a href="#productos">Colección</a>
+        <a href="#categorias">Categorías</a>
+    </nav>
+
+    <a class="nav-button" href="#productos">EXPLORAR</a>
+</header>
+
+<main>
+    <section class="hero" id="inicio">
+        <div class="hero-content">
+            <p class="eyebrow">FRAGRANCIAS SELECTAS</p>
+            <h1>EL ARTE DE<br><em>DEJAR HUELLA.</em></h1>
+            <p class="hero-description">
+                Descubre fragancias icónicas de las mejores
+                casas de perfumería del mundo.
+            </p>
+            <a href="#productos" class="primary-button">
+                EXPLORAR COLECCIÓN &rarr;
+            </a>
+        </div>
+        <div class="hero-art">
+            <div class="bottle">
+                <span>ARVEX</span>
+                <small>FRAGRANCES</small>
+            </div>
+        </div>
+    </section>
+
+    <section class="benefits">
+        <span>✦ SELECCIÓN PREMIUM</span>
+        <span>✦ MARCAS RECONOCIDAS</span>
+        <span>✦ EXPERIENCIA EXCLUSIVA</span>
+    </section>
+
+    <section class="collection" id="productos">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">DESCUBRE ARVEX</p>
+                <h2>LA COLECCIÓN</h2>
+            </div>
+            <p>Fragancias que definen tu identidad.</p>
+        </div>
+
+        <div class="product-grid">
+            {% for producto in productos %}
+           <a class="product-card" href="{% url 'detalle_producto' producto.slug %}">
+                <div class="product-image">
+                    {% if producto.imagen %}
+                        <img src="{{ producto.imagen.url }}"
+                             alt="{{ producto.nombre }}">
+                    {% else %}
+                        <div class="placeholder">ARVEX</div>
+                    {% endif %}
+
+                    {% if producto.destacado %}
+                        <span class="tag">DESTACADO</span>
+                    {% endif %}
+                </div>
+
+                <div class="product-info">
+                    <span class="brand">{{ producto.marca.nombre }}</span>
+                    <h3>{{ producto.nombre }}</h3>
+                    <p class="category">
+                        {{ producto.categoria.nombre }}
+                    </p>
+                    <div class="product-bottom">
+                        <strong>RD$ {{ producto.precio }}</strong>
+                        {% if producto.stock > 0 %}
+                            <span class="available">Disponible</span>
+                        {% else %}
+                            <span class="sold-out">Agotado</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <p class="empty">
+                Estamos preparando nuestra colección.
+                Pronto encontrarás aquí nuestros perfumes.
+            </p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="categories-section" id="categorias">
+        <p class="eyebrow">ENCUENTRA TU ESTILO</p>
+        <h2>EXPLORA POR CATEGORÍA</h2>
+
+        <div class="category-grid">
+            {% for categoria in categorias %}
+            <div class="category-card">
+                <span>ARVEX COLLECTION</span>
+                <h3>{{ categoria.nombre }}</h3>
+                <p>{{ categoria.descripcion|truncatewords:12 }}</p>
+            </div>
+            {% empty %}
+            <p>Próximamente nuevas categorías.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="closing">
+        <p class="eyebrow">ARVEX FRAGRANCES & CARE</p>
+        <h2>TU ESENCIA.<br><em>TU IDENTIDAD.</em></h2>
+        <a href="#productos" class="primary-button">
+            DESCUBRIR ARVEX &rarr;
+        </a>
+    </section>
+</main>
+
+<footer>
+    <span class="logo">ARVEX<span>.</span></span>
+    <p>Fragancias y cuidado personal.</p>
+    <small>© 2026 ARVEX. Proyecto académico.</small>
+</footer>
+
+</body>
+</html>

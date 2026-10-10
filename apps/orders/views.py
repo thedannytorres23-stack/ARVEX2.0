@@ -1,0 +1,100 @@
+from django.shortcuts import render
+
+# Create your views here.
+
+
+from decimal import Decimal
+
+from django.db import transaction
+from django.db.models import F
+from django.shortcuts import render, redirect
+from django.views.decorators.http import require_http_methods
+
+from apps.catalog.models import Producto
+from .forms import PedidoForm
+from .models import Pedido, DetallePedido
+
+
+@require_http_methods(["GET", "POST"])
+def finalizar_compra(request):
+    carrito = request.session.get("carrito", {})
+
+    if not carrito:
+        return redirect("ver_carrito")
+
+    form = PedidoForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        with transaction.atomic():
+            productos = {
+                str(p.id): p
+                for p in Producto.objects.select_for_update().filter(
+                    id__in=carrito.keys(),
+                    activo=True
+                )
+            }
+
+            total = Decimal("0.00")
+            detalles = []
+
+            for clave, cantidad in carrito.items():
+                producto = productos.get(clave)
+
+                if (
+                    producto is None
+                    or type(cantidad) is not int
+                    or cantidad <= 0
+                    or cantidad > producto.stock
+                ):
+                    form.add_error(
+                        None,
+                        "Hay productos sin disponibilidad. "
+                        "Revisa tu carrito."
+                    )
+                    break
+
+                total += producto.precio * cantidad
+                detalles.append((producto, cantidad))
+
+            if not form.errors:
+                pedido = Pedido.objects.create(
+                    nombre=form.cleaned_data["nombre"],
+                    telefono=form.cleaned_data["telefono"],
+                    direccion=form.cleaned_data["direccion"],
+                    total=total
+                )
+
+                for producto, cantidad in detalles:
+                    DetallePedido.objects.create(
+                        pedido=pedido,
+                        producto=producto,
+                        cantidad=cantidad,
+                        precio=producto.precio
+                    )
+
+                    Producto.objects.filter(
+                        pk=producto.pk
+                    ).update(
+                        stock=F("stock") - cantidad
+                    )
+
+                request.session["carrito"] = {}
+                return redirect(
+                    "pedido_exitoso",
+                    pedido_id=pedido.id
+                )
+
+    return render(
+        request,
+        "orders/finalizar.html",
+        {"form": form}
+    )
+
+
+def pedido_exitoso(request, pedido_id):
+    return render(
+        request,
+        "orders/exito.html",
+        {"pedido_id": pedido_id}
+    )
+
