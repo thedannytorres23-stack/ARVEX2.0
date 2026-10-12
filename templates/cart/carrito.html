@@ -1,3 +1,4 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
@@ -5,66 +6,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Mi carrito | ARVEX</title>
+
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/carrito.css' %}">
+
+    <style>
+        .cupon-panel {
+            margin-top: 25px;
+            padding: 25px;
+            background: #191919;
+            border: 1px solid #3d3527;
+            border-radius: 10px;
+        }
+
+        .cupon-panel h3 {
+            color: #d8b46b;
+            margin-bottom: 15px;
+        }
+
+        .cupon-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .cupon-form input {
+            flex: 1;
+            min-width: 160px;
+            padding: 13px;
+            background: #101010;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+        }
+
+        .cupon-form button,
+        .quitar-cupon {
+            padding: 13px 20px;
+            background: #d8b46b;
+            color: #111;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        .resumen-fila {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .descuento {
+            color: #8dd5a1;
+        }
+
+        .mensaje {
+            padding: 12px;
+            margin: 12px 0;
+            background: #242424;
+            border-left: 3px solid #d8b46b;
+        }
+
+        .total-final {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #555;
+            color: #d8b46b;
+        }
+
+        .finalizar-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 15px 25px;
+            background: #d8b46b;
+            color: #111;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 
 <body>
 
     <header class="navbar">
-        <a href="{% url 'home' %}" class="logo">ARVEX<span>.</span></a>
+        <a href="{% url 'home' %}" class="logo">
+            ARVEX<span>.</span>
+        </a>
+
         <a href="{% url 'home' %}#productos" class="nav-button">
             SEGUIR COMPRANDO
         </a>
     </header>
 
     <main class="carrito-contenedor">
+
         <p class="eyebrow">TU SELECCIÓN</p>
         <h1>MI CARRITO</h1>
 
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mensaje">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
         {% for item in items %}
-        <div class="carrito-producto">
-            {% if item.producto.imagen %}
-            <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}">
-            {% endif %}
 
-            <div class="carrito-info">
-                <p class="eyebrow">{{ item.producto.marca.nombre }}</p>
-                <h2>{{ item.producto.nombre }}</h2>
-                <p>RD$ {{ item.producto.precio }}</p>
+            <div class="carrito-producto">
 
-                <form method="post" action="{% url 'actualizar_carrito' item.producto.id %}">
-                    {% csrf_token %}
-                    <input type="number" name="cantidad" min="0" max="{{ item.producto.stock }}"
-                        value="{{ item.cantidad }}">
-                    <button type="submit">ACTUALIZAR</button>
-                </form>
+                {% if item.producto.imagen %}
+                    <img
+                        src="{{ item.producto.imagen.url }}"
+                        alt="{{ item.producto.nombre }}"
+                    >
+                {% endif %}
 
-                <form method="post" action="{% url 'eliminar_carrito' item.producto.id %}">
-                    {% csrf_token %}
-                    <button type="submit">ELIMINAR</button>
-                </form>
+                <div class="carrito-info">
+
+                    <p class="eyebrow">
+                        {{ item.producto.marca.nombre }}
+                    </p>
+
+                    <h2>{{ item.producto.nombre }}</h2>
+
+                    <p>RD$ {{ item.producto.precio }}</p>
+
+                    <form
+                        method="post"
+                        action="{% url 'actualizar_carrito' item.producto.id %}"
+                    >
+                        {% csrf_token %}
+
+                        <input
+                            type="number"
+                            name="cantidad"
+                            min="0"
+                            max="{{ item.producto.stock }}"
+                            value="{{ item.cantidad }}"
+                        >
+
+                        <button type="submit">
+                            ACTUALIZAR
+                        </button>
+                    </form>
+
+                    <form
+                        method="post"
+                        action="{% url 'eliminar_carrito' item.producto.id %}"
+                    >
+                        {% csrf_token %}
+
+                        <button type="submit">
+                            ELIMINAR
+                        </button>
+                    </form>
+
+                </div>
+
+                <strong>
+                    RD$ {{ item.subtotal }}
+                </strong>
+
             </div>
 
-            <a href="{% url 'finalizar_compra' %}">
-                FINALIZAR COMPRA →
-            </a>
-
-            <strong>RD$ {{ item.subtotal }}</strong>
-        </div>
         {% empty %}
-        <p class="carrito-vacio">Tu carrito está vacío.</p>
+
+            <p class="carrito-vacio">
+                Tu carrito está vacío.
+            </p>
+
         {% endfor %}
 
         {% if items %}
-        <div class="carrito-total">
-            <h2>TOTAL: RD$ {{ total }}</h2>
-            <p>El proceso de pago estará disponible próximamente.</p>
-        </div>
+
+            <section class="cupon-panel">
+
+                <h3>CÓDIGO PROMOCIONAL</h3>
+
+                <form
+                    method="post"
+                    action="{% url 'aplicar_cupon' %}"
+                    class="cupon-form"
+                >
+                    {% csrf_token %}
+
+                    <input
+                        type="text"
+                        name="codigo"
+                        placeholder="Introduce tu cupón"
+                        maxlength="30"
+                        required
+                    >
+
+                    <button type="submit">
+                        APLICAR
+                    </button>
+
+                </form>
+
+                {% if cupon %}
+
+                    <p class="descuento">
+                        Cupón {{ cupon.codigo }} aplicado:
+                        {{ cupon.porcentaje }}% de descuento
+                    </p>
+
+                    <form
+                        method="post"
+                        action="{% url 'quitar_cupon' %}"
+                    >
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="quitar-cupon"
+                        >
+                            QUITAR CUPÓN
+                        </button>
+
+                    </form>
+
+                {% endif %}
+
+            </section>
+
+            <div class="carrito-total">
+
+                <h2>RESUMEN DE COMPRA</h2>
+
+                <div class="resumen-fila">
+                    <span>Subtotal</span>
+                    <span>RD$ {{ subtotal }}</span>
+                </div>
+
+                {% if cupon %}
+
+                    <div class="resumen-fila descuento">
+                        <span>
+                            Descuento ({{ cupon.porcentaje }}%)
+                        </span>
+
+                        <span>
+                            - RD$ {{ descuento }}
+                        </span>
+                    </div>
+
+                {% endif %}
+
+                <h2 class="total-final">
+                    TOTAL: RD$ {{ total }}
+                </h2>
+
+                <a
+                    href="{% url 'finalizar_compra' %}"
+                    class="finalizar-btn"
+                >
+                    FINALIZAR COMPRA →
+                </a>
+
+            </div>
+
         {% endif %}
+
     </main>
 
 </body>
-
 </html>

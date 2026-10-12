@@ -1,7 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
-
 
 from decimal import Decimal
 
@@ -11,6 +7,8 @@ from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
 
 from apps.catalog.models import Producto
+from apps.promotions.models import Cupon
+
 from .forms import PedidoForm
 from .models import Pedido, DetallePedido
 
@@ -25,7 +23,9 @@ def finalizar_compra(request):
     form = PedidoForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
+
         with transaction.atomic():
+
             productos = {
                 str(p.id): p
                 for p in Producto.objects.select_for_update().filter(
@@ -34,7 +34,7 @@ def finalizar_compra(request):
                 )
             }
 
-            total = Decimal("0.00")
+            subtotal = Decimal("0.00")
             detalles = []
 
             for clave, cantidad in carrito.items():
@@ -53,36 +53,65 @@ def finalizar_compra(request):
                     )
                     break
 
-                total += producto.precio * cantidad
+                subtotal += producto.precio * cantidad
                 detalles.append((producto, cantidad))
 
             if not form.errors:
-                pedido = Pedido.objects.create(
-                    nombre=form.cleaned_data["nombre"],
-                    telefono=form.cleaned_data["telefono"],
-                    direccion=form.cleaned_data["direccion"],
-                    total=total
-                )
 
-                for producto, cantidad in detalles:
-                    DetallePedido.objects.create(
-                        pedido=pedido,
-                        producto=producto,
-                        cantidad=cantidad,
-                        precio=producto.precio
+                # Validar el cupón nuevamente al comprar
+                descuento = Decimal("0.00")
+                codigo = request.session.get("cupon_codigo")
+
+                if codigo:
+                    cupon = Cupon.objects.filter(
+                        codigo=codigo
+                    ).first()
+
+                    if cupon and cupon.es_valido():
+                        descuento = (
+                            subtotal
+                            * Decimal(cupon.porcentaje)
+                            / Decimal("100")
+                        ).quantize(Decimal("0.01"))
+                    else:
+                        request.session.pop("cupon_codigo", None)
+                        form.add_error(
+                            None,
+                            "El cupón ya no es válido. "
+                            "Revisa tu carrito antes de continuar."
+                        )
+
+                if not form.errors:
+                    total = subtotal - descuento
+
+                    pedido = Pedido.objects.create(
+                        nombre=form.cleaned_data["nombre"],
+                        telefono=form.cleaned_data["telefono"],
+                        direccion=form.cleaned_data["direccion"],
+                        total=total
                     )
 
-                    Producto.objects.filter(
-                        pk=producto.pk
-                    ).update(
-                        stock=F("stock") - cantidad
-                    )
+                    for producto, cantidad in detalles:
+                        DetallePedido.objects.create(
+                            pedido=pedido,
+                            producto=producto,
+                            cantidad=cantidad,
+                            precio=producto.precio
+                        )
 
-                request.session["carrito"] = {}
-                return redirect(
-                    "pedido_exitoso",
-                    pedido_id=pedido.id
-                )
+                        Producto.objects.filter(
+                            pk=producto.pk
+                        ).update(
+                            stock=F("stock") - cantidad
+                        )
+
+                    request.session["carrito"] = {}
+                    request.session.pop("cupon_codigo", None)
+
+                    return redirect(
+                        "pedido_exitoso",
+                        pedido_id=pedido.id
+                    )
 
     return render(
         request,
@@ -97,4 +126,3 @@ def pedido_exitoso(request, pedido_id):
         "orders/exito.html",
         {"pedido_id": pedido_id}
     )
-
