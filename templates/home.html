@@ -17,6 +17,11 @@
         <a href="#inicio">Inicio</a>
         <a href="#productos">Colección</a>
         <a href="#categorias">Categorías</a>
+        {% if user.is_authenticated and user.is_staff %}
+    <a href="{% url 'panel_almacen' %}">
+        Almacén
+    </a>
+{% endif %}
     </nav>
 
     <a class="nav-button" href="#productos">EXPLORAR</a>

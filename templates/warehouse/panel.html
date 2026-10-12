@@ -1,0 +1,212 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Almacén | ARVEX</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #101114;
+            color: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            padding: 24px 6%;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: #d8b46b;
+            font-size: 26px;
+            letter-spacing: 5px;
+            font-weight: bold;
+        }
+
+        a { color: #d8b46b; text-decoration: none; }
+
+        main {
+            max-width: 1250px;
+            margin: auto;
+            padding: 45px 24px;
+        }
+
+        h1 { font-size: 34px; margin-bottom: 8px; }
+        h2 { margin-top: 45px; }
+
+        .subtitle { color: #aaa; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-top: 35px;
+        }
+
+        .stat {
+            background: #1d1f23;
+            border: 1px solid #333;
+            padding: 25px;
+            border-radius: 12px;
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 35px;
+            color: #d8b46b;
+            margin-bottom: 8px;
+        }
+
+        .stat span { color: #bbb; }
+
+        .table-container {
+            overflow-x: auto;
+            background: #1d1f23;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 550px;
+        }
+
+        th, td {
+            padding: 17px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        th { color: #d8b46b; }
+
+        .low { color: #ff7777; }
+        .ok { color: #8dd5a1; }
+
+        .button {
+            display: inline-block;
+            background: #d8b46b;
+            color: #111;
+            padding: 13px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 650px) {
+            .stats { grid-template-columns: 1fr; }
+            h1 { font-size: 27px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">ARVEX</div>
+        <a href="{% url 'home' %}">Volver a la tienda</a>
+    </header>
+
+    <main>
+        <h1>Control de almacén</h1>
+        <p class="subtitle">
+            Inventario y movimientos de mercancía
+        </p>
+
+        <section class="stats">
+            <div class="stat">
+                <strong>{{ total_productos }}</strong>
+                <span>Productos registrados</span>
+            </div>
+
+            <div class="stat">
+                <strong>{{ total_unidades }}</strong>
+                <span>Unidades disponibles</span>
+            </div>
+
+            <div class="stat">
+                <strong>{{ stock_bajo }}</strong>
+                <span>Productos con stock bajo (5 o menos)</span>
+            </div>
+        </section>
+
+        <h2>Inventario actual</h2>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Marca</th>
+                        <th>Stock</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in productos %}
+                    <tr>
+                        <td>{{ producto.nombre }}</td>
+                        <td>{{ producto.marca.nombre }}</td>
+                        <td>{{ producto.stock }}</td>
+                        <td>
+                            {% if producto.stock == 0 %}
+                                <span class="low">Agotado</span>
+                            {% elif producto.stock <= 5 %}
+                                <span class="low">Stock bajo</span>
+                            {% else %}
+                                <span class="ok">Disponible</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">No hay productos registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <a class="button"
+           href="{% url 'admin:warehouse_movimientoinventario_add' %}">
+            + Registrar movimiento
+        </a>
+
+        <h2>Últimos movimientos</h2>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
+                        <th>Motivo</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for movimiento in movimientos %}
+                    <tr>
+                        <td>{{ movimiento.producto.nombre }}</td>
+                        <td>{{ movimiento.get_tipo_display }}</td>
+                        <td>{{ movimiento.cantidad }}</td>
+                        <td>{{ movimiento.motivo }}</td>
+                        <td>{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">Todavía no hay movimientos.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>
